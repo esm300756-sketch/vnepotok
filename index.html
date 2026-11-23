@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101116">
+<title>ВНЕ ПОТОКА — AI</title>
+<style>
+:root{color-scheme:dark;--bg:#101116;--panel:#191b23;--line:#2b2e39;--text:#f3f4f8;--muted:#9297a6;--accent:#ff765f}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -20%,#29212b 0,transparent 48%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+.wrap{max-width:900px;margin:auto;padding:28px 18px 32px;min-height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0 22px}
+.brand{font-weight:800;letter-spacing:.16em;font-size:15px}.brand span{color:var(--accent)}.status{color:var(--muted);font-size:12px;display:flex;gap:8px;align-items:center}.dot{width:8px;height:8px;border-radius:50%;background:#65c995;box-shadow:0 0 12px #65c995}
+main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:44px 0}.intro{text-align:center;margin:0 auto 34px;max-width:620px}.eyebrow{color:var(--accent);letter-spacing:.22em;font-size:11px;font-weight:700}.intro h1{font-size:clamp(34px,8vw,62px);line-height:1.04;letter-spacing:-.045em;margin:14px 0}.intro p{color:var(--muted);margin:0;font-size:16px}
+.chat{width:100%;max-width:760px;margin:0 auto;background:rgba(25,27,35,.82);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 18px 60px #0005}
+.messages{min-height:190px;max-height:48vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:14px}.welcome{color:var(--muted);text-align:center;margin:auto;font-size:14px}.msg{max-width:88%;padding:12px 15px;border-radius:16px;white-space:pre-wrap;overflow-wrap:anywhere}.user{align-self:flex-end;background:#34303a}.assistant{align-self:flex-start;background:#222530;border:1px solid #343846}
+form{padding:14px;border-top:1px solid var(--line);display:flex;gap:10px;background:#15171e}textarea{flex:1;resize:vertical;min-height:50px;max-height:150px;background:#20232c;border:1px solid #383c49;border-radius:14px;padding:13px;color:var(--text);font:inherit;outline:none}textarea:focus{border-color:var(--accent)}button{border:0;border-radius:14px;background:var(--accent);color:#171318;font-weight:800;padding:0 20px;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.hint{text-align:center;color:#777d8b;font-size:11px;margin-top:14px}
+@media(max-width:560px){.wrap{padding:18px 12px}.intro{margin-bottom:24px}.messages{padding:16px;min-height:160px}form{padding:10px}button{padding:0 15px}}
+</style>
+</head>
+<body><div class="wrap">
+<header><div class="brand">ВНЕ <span>ПОТОКА</span></div><div class="status"><i class="dot"></i> AI-ПРОСТРАНСТВО</div></header>
+<main>
+<section class="intro"><div class="eyebrow">ТВОЯ ИДЕЯ. ТВОЙ ТЕМП.</div><h1>Думай <span style="color:var(--accent)">шире.</span></h1><p>Личное пространство для общения с искусственным интеллектом.</p></section>
+<section class="chat" aria-label="Чат с ИИ"><div class="messages" id="messages"><div class="welcome" id="welcome">Напиши свой первый запрос — начнём разговор.</div></div>
+<form id="form"><textarea id="prompt" placeholder="Напиши сообщение..." rows="1" required></textarea><button id="send" type="submit">Отправить</button></form></section>
+<div class="hint">ВНЕ ПОТОКА · ранняя версия</div>
+</main></div>
+<script>
+const API='https://vnepotok-ai.ludaklass56.workers.dev/';
+const form=document.getElementById('form'),input=document.getElementById('prompt'),send=document.getElementById('send'),messages=document.getElementById('messages');
+function add(text,who){const el=document.createElement('div');el.className='msg '+who;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
+form.addEventListener('submit',async e=>{e.preventDefault();const prompt=input.value.trim();if(!prompt)return;document.getElementById('welcome')?.remove();add(prompt,'user');input.value='';send.disabled=true;send.textContent='...';const waiting=add('Думаю…','assistant');
+try{const res=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});const raw=await res.text();if(!res.ok)throw new Error('Сервер ответил с ошибкой '+res.status+': '+raw.slice(0,300));let data;try{data=JSON.parse(raw)}catch{data=raw}const answer=typeof data==='string'?data:(data.response??data.result?.response??data.result??data.text??data.output??JSON.stringify(data));waiting.textContent=String(answer)}
+catch(err){waiting.textContent='Не удалось получить ответ от ИИ. '+err.message+'\nПроверь, что Worker доступен и разрешены запросы с сайта.'}
+finally{send.disabled=false;send.textContent='Отправить';input.focus()}
+});
+input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit()}});
+</script></body></html>
